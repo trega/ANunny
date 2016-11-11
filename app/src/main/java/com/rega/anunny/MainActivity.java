@@ -1,18 +1,21 @@
 package com.rega.anunny;
 
+import android.Manifest;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
+import android.view.TextureView;
+import android.view.View;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -21,19 +24,23 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    private ImageView mimageViewLastPic;
+    private TextureView mTextureImagePreview;
+    private CCamera camera;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
+    private TextureView.SurfaceTextureListener surfaceTextureListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        mimageViewLastPic = (ImageView) findViewById(R.id.imageViewLastPic);
+        camera = new CCamera(this);
+
+        initTextureView();
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -46,6 +53,46 @@ public class MainActivity extends AppCompatActivity {
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    }
+
+    private void initTextureView() {
+        requestCameraPermissions();
+        mTextureImagePreview = (TextureView) findViewById(R.id.textureImagePreview);
+        surfaceTextureListener = new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                camera.openCamera();
+            }
+
+            @Override
+            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            }
+
+            @Override
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                return false;
+            }
+
+            @Override
+            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+            }
+        };
+        mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
+    }
+
+    private void requestCameraPermissions() {
+        final int REQUEST_CAMERA_PERMISSION = 200;
+        // Add permission for camera and let user grant the permission
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_CAMERA_PERMISSION);
+            return;
+        }
     }
 
     @Override
@@ -79,7 +126,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showSnackbar(View view, String msg) {
+    @Override
+    protected void onPause() {
+        camera.stopBackgroundThread();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        camera.startBackgroundThread();
+        if (mTextureImagePreview.isAvailable()) {
+            camera.openCamera();
+        } else {
+            mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
+        }
+    }
+
+    public void showSnackbar(View view, String msg) {
         Snackbar.make(view, msg,
                 Snackbar.LENGTH_LONG).setAction("Action", null).show();
     }
@@ -113,13 +177,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            mimageViewLastPic.setImageBitmap(imageBitmap);
-        }else{
-//            showSnackbar(findViewById(R.id.content_main), "Problem taking a picture");
-        }
+//        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+//            Bundle extras = data.getExtras();
+//            Bitmap imageBitmap = (Bitmap) extras.get("data");
+//            mimageViewLastPic.setImageBitmap(imageBitmap);
+//        }else{
+////            showSnackbar(findViewById(R.id.content_main), "Problem taking a picture");
+//        }
     }
 
     @Override
@@ -130,5 +194,9 @@ public class MainActivity extends AppCompatActivity {
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
+    }
+
+    public TextureView getTextureImagePreview(){
+        return mTextureImagePreview;
     }
 }
