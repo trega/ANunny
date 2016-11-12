@@ -3,7 +3,6 @@ package com.rega.anunny;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.SurfaceTexture;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -21,6 +20,8 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import camera_service.CameraService;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -47,7 +48,8 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                camera.takePicture();
+//                camera.takePicture();
+                startCameraService();
             }
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -55,29 +57,39 @@ public class MainActivity extends AppCompatActivity {
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
+    private void startCameraService() {
+        Intent serviceIntent = new Intent(this, CameraService.class);
+        startService(serviceIntent);
+    }
+
+    private void stopCameraService() {
+        Intent serviceIntent = new Intent(this, CameraService.class);
+        stopService(serviceIntent);
+    }
+
     private void initTextureView() {
         requestCameraPermissions();
         mTextureImagePreview = (TextureView) findViewById(R.id.textureImagePreview);
-        surfaceTextureListener = new TextureView.SurfaceTextureListener() {
-            @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                camera.openCamera();
-            }
-
-            @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-            }
-
-            @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                return false;
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-            }
-        };
-        mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
+//        surfaceTextureListener = new TextureView.SurfaceTextureListener() {
+//            @Override
+//            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+//                camera.openCamera();
+//            }
+//
+//            @Override
+//            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+//            }
+//
+//            @Override
+//            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+//                return false;
+//            }
+//
+//            @Override
+//            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+//            }
+//        };
+//        mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
     }
 
     private void requestCameraPermissions() {
@@ -128,19 +140,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        camera.stopBackgroundThread();
+//        camera.stopBackgroundThread();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        camera.startBackgroundThread();
-        if (mTextureImagePreview.isAvailable()) {
-            camera.openCamera();
-        } else {
-            mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
-        }
+//        camera.startBackgroundThread();
+//        if (mTextureImagePreview.isAvailable()) {
+//            camera.openCamera();
+//        } else {
+//            mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
+//        }
     }
 
     public void showSnackbar(View view, String msg) {
@@ -189,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStop() {
         super.onStop();
+        stopCameraService();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
