@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dispatchTakePictureIntent(view);
+                camera.takePicture();
             }
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
