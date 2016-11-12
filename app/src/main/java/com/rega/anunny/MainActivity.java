@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
         Intent serviceIntent = new Intent(this, CameraService.class);
         stopService(serviceIntent);
     }
-
     private void initTextureView() {
         requestCameraPermissions();
         mTextureImagePreview = (TextureView) findViewById(R.id.textureImagePreview);

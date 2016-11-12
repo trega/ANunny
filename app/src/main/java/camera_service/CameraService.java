@@ -140,8 +140,8 @@ public class CameraService extends Service {
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
         OutputStream output = null;
-        File file;
         try {
+            File file;
             if(Environment.isExternalStorageEmulated()) {
                 Log.i(TAG, "Writing picture to external storage");
                 file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ANunnyPicture.jpg");
@@ -164,7 +164,6 @@ public class CameraService extends Service {
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
     }
-
     private boolean checkCameraPermissions() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) !=
                 PackageManager.PERMISSION_GRANTED) {
