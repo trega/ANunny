@@ -43,11 +43,13 @@ public class CameraHandler {
 
 
     public void initialize(){
+        Log.v(TAG, "Entering initialize()");
         CameraManager manager = (CameraManager) mCameraService.getSystemService(CAMERA_SERVICE);
         try {
             if (!checkCameraPermissions())
                 return;
-            manager.openCamera(getCamera(manager), new CameraDevice.StateCallback() {
+            String camera = getCamera(manager);
+            CameraDevice.StateCallback callback = new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(CameraDevice camera) {
                     Log.v(TAG,"Entering manager.openCamera.onOpened()");
@@ -64,7 +66,9 @@ public class CameraHandler {
                 public void onError(CameraDevice camera, int error) {
                     Log.e(TAG,"Camera could not be opened");
                 }
-            }, null);
+            };
+            Log.d(TAG, "mCameraService = " +  this.mCameraService);
+            manager.openCamera(camera, callback, null);
             Size[] jpegSizes = mCameraCharacteristics.get(CameraCharacteristics.
                     SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
             Log.d(TAG,"jpegSizes[0].getWidth()=" + jpegSizes[0].getWidth() +
@@ -96,11 +100,13 @@ public class CameraHandler {
     }
 
     private String getCamera(CameraManager manager){
+        Log.v(TAG, "Entering getCamera()");
         try {
             for (String cameraId : manager.getCameraIdList()) {
                 mCameraCharacteristics = manager.getCameraCharacteristics(cameraId);
                 int cOrientation = mCameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
                 if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) {
+                    Log.d(TAG, "Camera found:" + cameraId);
                     return cameraId;
                 }
             }

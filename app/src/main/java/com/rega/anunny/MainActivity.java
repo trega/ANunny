@@ -1,6 +1,7 @@
 package com.rega.anunny;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -15,16 +16,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import CommonInterface.CommonInterface;
 import camera_service.CameraService;
 
 public class MainActivity extends AppCompatActivity {
     private TextureView mTextureImagePreview;
+    SocketClient mSocketClient;
+    private static final String TAG = "NUNNY_MAIN";
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -40,16 +45,34 @@ public class MainActivity extends AppCompatActivity {
         initTextureView();
         setSupportActionBar(toolbar);
 
+        startCameraService();
+
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startCameraService();
+                if (mSocketClient == null)
+                {
+                    mSocketClient = new SocketClient();
+                    mSocketClient.initialize(CommonInterface.CAMERA_SVC_TCP_PORT);
+                }
+                else{
+                    showToast(TAG + ": client not ready, try again in a while");
+                }
+//                if(mSocketClient.isClientRunning()){
+//                    showToast(TAG + ": sending request to server");
+//                    mSocketClient.sendRequest(CommonInterface.CaptureModes.CAPTURE_ONCE);
+//                }else{
+//                    showToast(TAG + ": client not ready, try again in a while");
+//                }
+
             }
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+
     }
 
     private void startCameraService() {
@@ -132,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
     public Action getIndexApiAction() {
         Thing object = new Thing.Builder()
                 .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
                 .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
                 .build();
         return new Action.Builder(Action.TYPE_VIEW)
@@ -155,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
         stopCameraService();
+        mSocketClient.stop();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -165,4 +188,15 @@ public class MainActivity extends AppCompatActivity {
     public TextureView getTextureImagePreview(){
         return mTextureImagePreview;
     }
+
+    private void showToast(String text) {
+        Context context = getApplicationContext();
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, TAG + text, duration);
+        toast.show();
+    }
 }
+
+//TODOs:
+//TODO: add client/server mode selection
+//TODO: change app icon
