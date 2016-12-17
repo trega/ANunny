@@ -15,6 +15,8 @@ import android.hardware.camera2.CaptureRequest;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Environment;
+import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.util.Size;
@@ -29,46 +31,67 @@ import java.util.Arrays;
 
 import static android.content.Context.CAMERA_SERVICE;
 
-public class CameraHandler {
+class CameraHandler {
     private static final String TAG = "CAM_HND";
     private CameraDevice mCameraDevice;
     private CameraCharacteristics mCameraCharacteristics;
     private ImageReader mImageReader;
     private CameraCaptureSession mCameraCaptureSession;
     private Service mCameraService;
+    private Handler mHandler = null;
 
-    public CameraHandler(Service cameraService) {
+    CameraHandler(Service cameraService) {
         mCameraService = cameraService;
     }
 
-
-    public void initialize(){
+    void initialize(Handler handler){
         Log.v(TAG, "Entering initialize()");
+        mHandler = handler;
         CameraManager manager = (CameraManager) mCameraService.getSystemService(CAMERA_SERVICE);
         try {
-            if (!checkCameraPermissions())
+            if (!checkCameraPermissions()){
+                Log.e(TAG,"Camera permissions not granted, returning");
                 return;
+            }
+
             String camera = getCamera(manager);
+            if (camera == null)
+            {
+                Log.e(TAG,"getCamera returned null, exiting");
+                System.exit(-2);
+            }
             CameraDevice.StateCallback callback = new CameraDevice.StateCallback() {
                 @Override
-                public void onOpened(CameraDevice camera) {
+                public void onOpened(@NonNull CameraDevice camera) {
                     Log.v(TAG,"Entering manager.openCamera.onOpened()");
                     mCameraDevice = camera;
-                    takePicture();
                 }
 
                 @Override
-                public void onDisconnected(CameraDevice camera) {
-                    Log.v(TAG,"Entering onDisconnected()");
+                public void onDisconnected(@NonNull CameraDevice camera) {
+                    Log.e(TAG,"Entering onDisconnected()");
                 }
 
                 @Override
-                public void onError(CameraDevice camera, int error) {
+                public void onError(@NonNull CameraDevice camera, int error) {
                     Log.e(TAG,"Camera could not be opened");
                 }
             };
             Log.d(TAG, "mCameraService = " +  this.mCameraService);
-            manager.openCamera(camera, callback, null);
+            manager.registerAvailabilityCallback(new CameraManager.AvailabilityCallback() {
+                @Override
+                public void onCameraUnavailable(@NonNull String cameraId)
+                {
+                    Log.e(TAG, "entering onCameraUnavailable()");
+                    super.onCameraUnavailable(cameraId);
+                }
+                @Override
+                public void onCameraAvailable(@NonNull String cameraId)                {
+                    Log.d(TAG, "entering onCameraAvailable()");
+                    super.onCameraAvailable(cameraId);
+                }
+            }, mHandler);
+            manager.openCamera(camera, callback, handler);
             Size[] jpegSizes = mCameraCharacteristics.get(CameraCharacteristics.
                     SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
             Log.d(TAG,"jpegSizes[0].getWidth()=" + jpegSizes[0].getWidth() +
@@ -83,7 +106,7 @@ public class CameraHandler {
                     processImage(img);
                     img.close();
                 }
-            }, null);
+            }, mHandler);
         } catch (CameraAccessException e){
             Log.e(TAG, e.getMessage());
         }
@@ -117,16 +140,17 @@ public class CameraHandler {
         return null;
     }
 
-    private boolean takePicture() {
+    boolean takePicture() {
         Log.v(TAG, "Entering takePicture()");
         if(null == mCameraDevice) {
             Log.e(TAG, "cameraDevice is null");
             return true;
         }
         try {
+            Log.v(TAG, "About to call createCaptureSession(), mHandler=" + mHandler);
             mCameraDevice.createCaptureSession(Arrays.asList(mImageReader.getSurface()), new CameraCaptureSession.StateCallback() {
                 @Override
-                public void onConfigured(CameraCaptureSession session) {
+                public void onConfigured(@NonNull CameraCaptureSession session) {
                     Log.v(TAG, "Entering CameraCaptureSession.onConfigured()");
                     mCameraCaptureSession = session;
                     try {
@@ -137,10 +161,10 @@ public class CameraHandler {
                 }
 
                 @Override
-                public void onConfigureFailed(CameraCaptureSession session) {
+                public void onConfigureFailed(@NonNull CameraCaptureSession session) {
                     Log.e(TAG, "Camera capture session: onConfigureFailed()");
                 }
-            }, null);
+            }, mHandler);
         } catch (CameraAccessException e){
             Log.e(TAG, e.getMessage());
         }
@@ -164,7 +188,7 @@ public class CameraHandler {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.capacity()];
         buffer.get(bytes);
-        OutputStream output = null;
+        OutputStream output;
         try {
             File file;
             if (Environment.isExternalStorageEmulated()) {

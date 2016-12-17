@@ -4,7 +4,9 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -16,17 +18,19 @@ public class CameraService extends Service {
     private static final String TAG = "CAM_SVC";
     CameraHandler mCameraHandler;
     SocketServer mSocketServer;
+    Handler mHandler;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.v(TAG, "Entering onCreate()");
+        mHandler = new Handler(Looper.getMainLooper());
         mSocketServer = new SocketServer(this);
         mSocketServer.startServer(CommonInterface.CAMERA_SVC_TCP_PORT);
         mCameraHandler = new CameraHandler(this);
-        Log.v(TAG, "Leaving onCreate()");
+        mCameraHandler.initialize(mHandler);
+        Log.v(TAG, "Leaving onCreate\n()");
     }
-
     @Override
     public void onDestroy() {
         Log.v(TAG, "Entering onDestroy()");
@@ -55,8 +59,7 @@ public class CameraService extends Service {
 
     public void captureOnce() {
         Log.v(TAG, "Entering captureOnce()");
-        mCameraHandler.initialize();
-//        showToast(CommonInterface.CaptureModes.CAPTURE_ONCE);
+        mCameraHandler.takePicture();
         Log.i(TAG,"CommonInterface.CaptureModes.CAPTURE_ONCE");
     }
 }

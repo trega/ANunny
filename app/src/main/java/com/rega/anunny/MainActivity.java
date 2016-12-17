@@ -57,15 +57,6 @@ public class MainActivity extends AppCompatActivity {
                     mSocketClient = new SocketClient();
                     mSocketClient.initialize(CommonInterface.CAMERA_SVC_TCP_PORT);
                 }
-                else{
-                    showToast(TAG + ": client not ready, try again in a while");
-                }
-//                if(mSocketClient.isClientRunning()){
-//                    showToast(TAG + ": sending request to server");
-//                    mSocketClient.sendRequest(CommonInterface.CaptureModes.CAPTURE_ONCE);
-//                }else{
-//                    showToast(TAG + ": client not ready, try again in a while");
-//                }
 
             }
         });
@@ -100,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     REQUEST_CAMERA_PERMISSION);
-            return;
         }
     }
 
@@ -135,12 +125,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        camera.startBackgroundThread();
-//        if (mTextureImagePreview.isAvailable()) {
-//            camera.openCamera();
-//        } else {
-//            mTextureImagePreview.setSurfaceTextureListener(surfaceTextureListener);
-//        }
     }
 
     public void showSnackbar(View view, String msg) {
@@ -199,4 +183,3 @@ public class MainActivity extends AppCompatActivity {
 
 //TODOs:
 //TODO: add client/server mode selection
-//TODO: change app icon
