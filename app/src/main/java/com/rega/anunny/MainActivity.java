@@ -1,6 +1,8 @@
 package com.rega.anunny;
 
 import android.Manifest;
+import android.app.FragmentManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,6 +14,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.TextureView;
@@ -29,35 +32,47 @@ import camera_service.CameraService;
 public class MainActivity extends AppCompatActivity {
     private TextureView mTextureImagePreview;
     SocketClient mSocketClient;
-    private static final String TAG = "NUNNY_MAIN";
+    private static final String TAG = R.string.main_log_tag +  "_MAIN";
+    private static final String TAG_RETAINER_FRAGMENT = "retainer_fragment";
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client;
+    private ComponentName mServiceName;
+    private RetainerFragment mRetainerFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.v(TAG, "Entering onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
+        FragmentManager fm = getFragmentManager();
+        mRetainerFragment = (RetainerFragment) fm.findFragmentByTag(TAG_RETAINER_FRAGMENT);
+
+        // If the Fragment is non-null, then it is currently being
+        // retained across a configuration change.
+        if (mRetainerFragment == null) {
+            mRetainerFragment = new RetainerFragment();
+            fm.beginTransaction().add(mRetainerFragment, TAG_RETAINER_FRAGMENT).commit();
+            startCameraService();
+        }else{
+            mServiceName = mRetainerFragment.getServerName();
+        }
+
         initTextureView();
         setSupportActionBar(toolbar);
 
-        startCameraService();
+
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mSocketClient == null)
-                {
-                    mSocketClient = new SocketClient();
-                    mSocketClient.initialize(CommonInterface.CAMERA_SVC_TCP_PORT);
-                }
-
+                connectClientSocket();
             }
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -66,9 +81,27 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void connectClientSocket()
+    {
+        if (mSocketClient == null)
+        {
+            Log.v(TAG, "Creating SocketClient");
+            mSocketClient = new SocketClient();
+
+        }
+        if(!mSocketClient.isSocketConnected())
+        {
+            Log.v(TAG, "Connecting socket in mSocketClient");
+            mSocketClient.initialize(CommonInterface.CAMERA_SVC_TCP_PORT);
+        }
+    }
+
     private void startCameraService() {
+
         Intent serviceIntent = new Intent(this, CameraService.class);
-        startService(serviceIntent);
+        mServiceName  = startService(serviceIntent);
+        mRetainerFragment.setServerName(mServiceName);
+
     }
 
     private void stopCameraService() {
@@ -118,7 +151,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-//        camera.stopBackgroundThread();
+        if(mSocketClient != null)
+            mSocketClient.stop();
         super.onPause();
     }
 
@@ -158,11 +192,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy()
+    {
+//        stopCameraService();
+        super.onDestroy();
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
-        stopCameraService();
-        mSocketClient.stop();
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         AppIndex.AppIndexApi.end(client, getIndexApiAction());

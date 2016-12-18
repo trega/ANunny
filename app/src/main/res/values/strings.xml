@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">ANunny</string>
     <string name="action_settings">Settings</string>
+    <string name="main_log_tag">ANUNNY_LOG</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

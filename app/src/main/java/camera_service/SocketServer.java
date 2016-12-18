@@ -4,6 +4,9 @@ package camera_service;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+
+import com.rega.anunny.R;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,7 +16,7 @@ import java.net.Socket;
 import CommonInterface.CommonInterface;
 
 class SocketServer {
-    private static final String TAG = "SOC_SRV";
+    private static final String TAG = R.string.main_log_tag +  "_SOC_SRV";
     private int mServerPort;
     private  Thread mServerThread = null;
     private ServerSocket mServerSocket;

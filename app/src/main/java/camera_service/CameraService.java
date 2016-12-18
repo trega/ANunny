@@ -12,10 +12,12 @@ import android.text.format.Formatter;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.rega.anunny.R;
+
 import CommonInterface.CommonInterface;
 
 public class CameraService extends Service {
-    private static final String TAG = "CAM_SVC";
+    private static final String TAG = R.string.main_log_tag +  "_CAM_SVC";
     CameraHandler mCameraHandler;
     SocketServer mSocketServer;
     Handler mHandler;

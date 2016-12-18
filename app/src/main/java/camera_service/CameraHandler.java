@@ -22,6 +22,8 @@ import android.util.Log;
 import android.util.Size;
 import android.widget.Toast;
 
+import com.rega.anunny.R;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,7 +34,7 @@ import java.util.Arrays;
 import static android.content.Context.CAMERA_SERVICE;
 
 class CameraHandler {
-    private static final String TAG = "CAM_HND";
+    private static final String TAG = R.string.main_log_tag +  "_CAM_HND";
     private CameraDevice mCameraDevice;
     private CameraCharacteristics mCameraCharacteristics;
     private ImageReader mImageReader;

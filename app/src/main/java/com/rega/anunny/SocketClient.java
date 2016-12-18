@@ -17,7 +17,7 @@ import java.net.UnknownHostException;
 import CommonInterface.CommonInterface;
 
 public class SocketClient {
-    private static final String TAG = "SOC_CLT";
+    private static final String TAG = R.string.main_log_tag +  "_SOC_CLT";
     private int mServerPort = -1;
     private Socket mClientSocket;
     private String mServerIp = "localhost";
@@ -43,33 +43,6 @@ public class SocketClient {
             e.printStackTrace();
         }
         out.println(msg);
-//        CommunicationThread commThread = new CommunicationThread(mClientSocket, msg);
-//        new Thread(commThread).start();
-    }
-
-    class CommunicationThread implements Runnable {
-        private Socket clientSocket;
-        private String msg;
-
-        public CommunicationThread(Socket socket, String msg) {
-            Log.v(TAG, "Entering CommunicationThread");
-            this.msg = msg;
-            clientSocket = socket;
-        }
-
-        public void run() {
-            Log.v(TAG, "Entering ClientCommunicationThread.run()");
-            PrintWriter out = null;
-            try {
-                out = new PrintWriter(
-                        new BufferedWriter(
-                                new OutputStreamWriter(clientSocket.getOutputStream())),
-                        true);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            out.println(msg);
-        }
     }
 
     public void stop() {
@@ -79,10 +52,6 @@ public class SocketClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public boolean isClientRunning() {
-        return clientRunning;
     }
 
     class ClientThread implements Runnable {
@@ -98,5 +67,9 @@ public class SocketClient {
                 e.printStackTrace();
             }
         }
+    }
+
+    public boolean isSocketConnected(){
+        return (mClientSocket != null) && (mClientSocket.isConnected());
     }
 }
